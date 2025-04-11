@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Dialog } from '@headlessui/react';
 
+
 function App() {
   const [file, setFile] = useState(null);
   const [tableData, setTableData] = useState([]);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [searchIFSC, setSearchIFSC] = useState('');
+  
   const [bankDetails, setBankDetails] = useState(null);
   const [modalData, setModalData] = useState(null);
 
@@ -38,7 +40,12 @@ function App() {
     try {
       const res = await axios.get(`https://ifsc.razorpay.com/${searchIFSC}`);
       setBankDetails(res.data);
+  
       await axios.post('http://localhost:5000/api/search', { ifsc: searchIFSC });
+  
+      
+      await fetchRecentSearches();
+  
       const localRes = await axios.get(`http://localhost:5000/api/data?ifsc=${searchIFSC}`);
       setTableData(localRes.data.data);
       setTotal(localRes.data.data.length);
@@ -49,6 +56,19 @@ function App() {
       setTotal(0);
     }
   };
+  
+  const fetchRecentSearches = async () => {
+    try {
+      const res = await axios.get('http://localhost:5000/api/recent-searches');
+      setRecentSearches(res.data);
+    } catch (err) {
+      console.error('Error fetching recent searches:', err);
+    }
+  };
+  
+  useEffect(() => {
+    fetchRecentSearches();
+  }, []);
 
   const exportRowToCSV = (row) => {
     const csvContent = `IFSC,BANK,BRANCH,ADDRESS,CITY,STATE\n"${row.IFSC}","${row.BANK}","${row.BRANCH}","${row.ADDRESS}","${row.CITY}","${row.STATE}"`;
@@ -64,11 +84,12 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-cyan-500 to-blue-500 p-4 md:p-6 text-white font-sans">
-      <h1 className="text-3xl md:text-5xl font-extrabold mb-6 text-center tracking-wide drop-shadow-md">
+      <h1 className="text-4xl md:text-6xl font-extrabold text-center mb-10 tracking-tight bg-gradient-to-r from-cyan-400 via-green-700 to-purple-600 bg-clip-text text-transparent drop-shadow-xl animate-pulse transition-all duration-500 ease-in-out">
         IFSC Bank Finder
       </h1>
 
-      {/* Upload Section */}
+
+      
       <div className="flex flex-col sm:flex-row items-center gap-3 mb-6 justify-center">
         <input
           type="file"
@@ -83,7 +104,7 @@ function App() {
         </button>
       </div>
 
-      {/* IFSC Search Section */}
+      
       <div className="flex flex-col sm:flex-row items-center gap-3 mb-6 justify-center">
         <input
           type="text"
@@ -94,13 +115,15 @@ function App() {
         />
         <button
           onClick={handleIFSCSearch}
-          className="w-full sm:w-auto bg-gradient-to-r from-green-600 to-green-800 hover:from-green-700 hover:to-green-900 text-white px-6 py-2 rounded-xl shadow hover:shadow-xl"
+          className="w-full sm:w-auto bg-gradient-to-r from-green-600 to-green-800 hover:from-green-700 hover:to-green-900 text-white px-6 py-2 rounded-xl shadow-md hover:shadow-lg active:scale-95 transform transition-all duration-300 ease-in-out hover:brightness-110"
         >
           Search
         </button>
       </div>
 
-      {/* IFSC Result */}
+      
+
+      
       {bankDetails && (
         <div className="bg-white/80 backdrop-blur-md text-black p-6 mb-8 rounded-xl shadow-2xl max-w-xl mx-auto border border-gray-200">
           {bankDetails.error ? (
@@ -118,7 +141,7 @@ function App() {
         </div>
       )}
 
-      {/* Table */}
+      
       <div className="overflow-x-auto shadow-xl rounded-xl bg-white/70 backdrop-blur-md border border-gray-200">
         <table className="min-w-full text-sm text-left text-gray-800">
           <thead className="text-xs uppercase bg-white/90 text-gray-700 border-b">
@@ -160,7 +183,7 @@ function App() {
         </table>
       </div>
 
-      {/* Pagination */}
+      
       <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-4">
         <button
           disabled={page === 1}
@@ -179,7 +202,7 @@ function App() {
         </button>
       </div>
 
-      {/* Modal */}
+      
       {modalData && (
         <Dialog open={true} onClose={() => setModalData(null)} className="fixed z-50 inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm">
           <Dialog.Panel className="bg-white p-6 rounded-lg max-w-md w-full text-black shadow-xl space-y-2">

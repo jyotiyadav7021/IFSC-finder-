@@ -11,12 +11,12 @@ app.use(cors());
 app.use(express.json());
 app.use('/uploads', express.static('uploads'));
 
-// MongoDB connection
+
 mongoose.connect('mongodb://localhost:27017/csvUploadDb')
   .then(() => console.log('MongoDB connected'))
   .catch(err => console.error('MongoDB connection error:', err));
 
-// Models
+
 const IFSCData = mongoose.model('IFSC', new mongoose.Schema({}, { strict: false }));
 
 const RecentSearch = mongoose.model('RecentSearch', new mongoose.Schema({
@@ -24,7 +24,7 @@ const RecentSearch = mongoose.model('RecentSearch', new mongoose.Schema({
   searchedAt: { type: Date, default: Date.now }
 }));
 
-// Multer config
+
 const storage = multer.diskStorage({
   destination: './uploads',
   filename: (req, file, cb) => {
@@ -33,7 +33,7 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-// Upload CSV and save to MongoDB
+
 app.post('/api/upload', upload.single('file'), async (req, res) => {
   const results = [];
 
@@ -42,7 +42,7 @@ app.post('/api/upload', upload.single('file'), async (req, res) => {
     .on('data', (data) => results.push(data))
     .on('end', async () => {
       try {
-        await IFSCData.deleteMany(); // Clear old data
+        await IFSCData.deleteMany(); 
         await IFSCData.insertMany(results);
         res.json({ message: 'Data uploaded and saved', count: results.length });
       } catch (err) {
@@ -52,7 +52,7 @@ app.post('/api/upload', upload.single('file'), async (req, res) => {
     });
 });
 
-// GET paginated and filterable IFSC data
+
 app.get('/api/data', async (req, res) => {
     try {
       const page = parseInt(req.query.page || '1');
@@ -79,7 +79,7 @@ app.get('/api/data', async (req, res) => {
   
   
 
-// POST save IFSC code to recent search
+
 app.post('/api/search', async (req, res) => {
   const { ifsc } = req.body;
 
@@ -91,6 +91,16 @@ app.post('/api/search', async (req, res) => {
   } catch (err) {
     console.error('Search save error:', err);
     res.status(500).json({ error: 'Failed to save search' });
+  }
+});
+
+app.get('/api/recent-searches', async (req, res) => {
+  try {
+    const recent = await RecentSearch.find().sort({ searchedAt: -1 }).limit(5);
+    res.json(recent);
+  } catch (err) {
+    console.error('Fetch recent search error:', err);
+    res.status(500).json({ error: 'Failed to fetch recent searches' });
   }
 });
 
